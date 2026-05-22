@@ -17,18 +17,32 @@ function generateWorkerCode(role) {
   return `${prefix}-${String(nextNum).padStart(3, '0')}`
 }
 
-export function saveWorker({ name, role, assignedArea }) {
+export function saveWorker({ name, mobile, role, assignedArea, userId, password }) {
   const workers = getWorkers()
+
+  if (workers.some((w) => w.userId === userId)) {
+    return null
+  }
+
   const workerCode = generateWorkerCode(role)
   const worker = {
     id: crypto.randomUUID(),
     workerCode,
     name,
+    mobile,
     role,
     assignedArea,
+    userId,
+    password,
     createdAt: new Date().toISOString(),
   }
   workers.push(worker)
   localStorage.setItem(STORAGE_KEY, JSON.stringify(workers))
   return worker
+}
+
+export function deleteWorker(id) {
+  const workers = getWorkers().filter((w) => w.id !== id)
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(workers))
+  return workers
 }

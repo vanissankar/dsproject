@@ -138,7 +138,7 @@ function ScannerPage() {
                 </div>
               )}
 
-              <div id="reader" className={`w-full bg-gray-100 rounded-lg overflow-hidden mb-4 scanner-container transition-all duration-300 ${scanSuccessFlash ? 'ring-2 ring-emerald-500 ring-offset-2' : ''}`} style={{ minHeight: '240px' }}>
+              <div id="reader" className={`relative w-full bg-gray-100 rounded-lg overflow-hidden mb-4 scanner-container transition-all duration-300 ${scanSuccessFlash ? 'ring-2 ring-emerald-500 ring-offset-2' : ''}`} style={{ minHeight: '200px' }}>
 
                 {popupResult && (
                   <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/30 rounded-lg">

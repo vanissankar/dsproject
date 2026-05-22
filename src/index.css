@@ -16,10 +16,12 @@ body {
 .scanner-container video {
   border-radius: 8px;
   object-fit: cover;
+  max-width: 100%;
 }
 
 #reader video {
   border-radius: 8px;
+  max-width: 100%;
 }
 
 @keyframes popup-in {

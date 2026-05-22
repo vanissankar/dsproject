@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FiShield, FiLock, FiMail } from 'react-icons/fi'
+import { FiShield, FiLock, FiKey } from 'react-icons/fi'
 import { login } from '../utils/auth'
 
 const roleRoutes = {
@@ -11,7 +11,7 @@ const roleRoutes = {
 
 function LoginPage() {
   const navigate = useNavigate()
-  const [email, setEmail] = useState('')
+  const [userId, setUserId] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -22,7 +22,7 @@ function LoginPage() {
     setLoading(true)
 
     try {
-      const user = await login(email, password)
+      const user = await login(userId, password)
       navigate(roleRoutes[user.role], { replace: true })
     } catch (err) {
       setError(err.message)
@@ -56,15 +56,15 @@ function LoginPage() {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email
+                User ID
               </label>
               <div className="relative">
-                <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
+                <FiKey className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
+                  type="text"
+                  value={userId}
+                  onChange={(e) => setUserId(e.target.value)}
+                  placeholder="Enter your User ID"
                   required
                   className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                 />

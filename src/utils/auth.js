@@ -1,8 +1,6 @@
-const USERS = [
-  { email: 'admin@farm.com', password: '123456', role: 'admin' },
-  { email: 'cleaner@farm.com', password: '123456', role: 'cleaner' },
-  { email: 'disease@farm.com', password: '123456', role: 'disease' },
-]
+import { getWorkers } from './workerStorage'
+
+const ADMIN = { userId: 'ADMIN', password: 'admin123', role: 'admin' }
 
 export const ROLE_DEFAULT_ROUTE = {
   admin: '/admin',
@@ -16,17 +14,26 @@ export const ROLE_ALLOWED_ROUTES = {
   disease: ['/disease'],
 }
 
-export function login(email, password) {
+export function login(userId, password) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      const user = USERS.find((u) => u.email === email && u.password === password)
-      if (user) {
-        const session = { email: user.email, role: user.role }
+      if (userId.toUpperCase() === ADMIN.userId && password === ADMIN.password) {
+        const session = { userId: ADMIN.userId, role: ADMIN.role, name: 'Administrator' }
         localStorage.setItem('biosecure_user', JSON.stringify(session))
         resolve(session)
-      } else {
-        reject(new Error('Invalid email or password'))
+        return
       }
+
+      const workers = getWorkers()
+      const worker = workers.find((w) => w.userId.toUpperCase() === userId.toUpperCase() && w.password === password)
+      if (worker) {
+        const session = { userId: worker.userId, role: worker.role, name: worker.name }
+        localStorage.setItem('biosecure_user', JSON.stringify(session))
+        resolve(session)
+        return
+      }
+
+      reject(new Error('Invalid User ID or password'))
     }, 800)
   })
 }
