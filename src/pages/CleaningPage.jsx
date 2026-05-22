@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { FiShield, FiCheckCircle, FiClock, FiAlertTriangle, FiCheckSquare, FiSend, FiClipboard, FiUser, FiMapPin } from 'react-icons/fi'
 import { getUser } from '../utils/auth'
 import { getWorkers } from '../utils/workerStorage'
@@ -17,9 +17,13 @@ function CleaningPage() {
   const allReports = getAllReports()
   const myReports = allReports.filter((r) => r.cleanerCode === user?.userId)
 
-  const worker = useMemo(() => {
-    const workers = getWorkers().filter((w) => w.role === 'cleaner')
-    return workers.length > 0 ? workers[0] : null
+  const [worker, setWorker] = useState(null)
+
+  useEffect(() => {
+    getWorkers().then((workers) => {
+      const found = workers.filter((w) => w.role === 'cleaner')
+      setWorker(found.length > 0 ? found[0] : null)
+    }).catch(() => setWorker(null))
   }, [])
 
   const cleanerName = worker?.name || user?.name || 'Cleaner'

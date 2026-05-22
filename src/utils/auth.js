@@ -1,4 +1,4 @@
-import { getWorkers } from './workerStorage'
+import { supabase } from '../services/supabase'
 
 const ADMIN = { userId: 'ADMIN', password: 'admin123', role: 'admin' }
 
@@ -14,28 +14,37 @@ export const ROLE_ALLOWED_ROUTES = {
   disease: ['/disease'],
 }
 
-export function login(userId, password) {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      if (userId.toUpperCase() === ADMIN.userId && password === ADMIN.password) {
-        const session = { userId: ADMIN.userId, role: ADMIN.role, name: 'Administrator' }
-        localStorage.setItem('biosecure_user', JSON.stringify(session))
-        resolve(session)
-        return
-      }
+export async function login(userId, password) {
+  if (userId.toUpperCase() === ADMIN.userId && password === ADMIN.password) {
+    const session = { userId: ADMIN.userId, role: ADMIN.role, name: 'Administrator' }
+    localStorage.setItem('biosecure_user', JSON.stringify(session))
+    return session
+  }
 
-      const workers = getWorkers()
-      const worker = workers.find((w) => w.userId.toUpperCase() === userId.toUpperCase() && w.password === password)
-      if (worker) {
-        const session = { userId: worker.userId, role: worker.role, name: worker.name }
-        localStorage.setItem('biosecure_user', JSON.stringify(session))
-        resolve(session)
-        return
-      }
+  const { data, error } = await supabase
+    .from('workers')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle()
 
-      reject(new Error('Invalid User ID or password'))
-    }, 800)
-  })
+  if (error) {
+    console.error('[Supabase] login error:', error)
+    throw new Error('Connection error. Please try again.')
+  }
+
+  if (!data || data.password !== password) {
+    throw new Error('Invalid User ID or password')
+  }
+
+  const session = {
+    userId: data.user_id,
+    role: data.role,
+    name: data.name,
+    assignedArea: data.assigned_area,
+    workerCode: data.worker_code,
+  }
+  localStorage.setItem('biosecure_user', JSON.stringify(session))
+  return session
 }
 
 export function logout() {

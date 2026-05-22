@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { FiUsers, FiShield, FiAlertTriangle, FiCamera, FiDownload, FiAlertOctagon, FiRefreshCw } from 'react-icons/fi'
 import WorkerForm from '../components/WorkerForm'
 import WorkerList from '../components/WorkerList'
@@ -8,7 +8,9 @@ import { getReports as getCleaningReports, exportReportsToCsv as exportCleaningC
 import { getReports as getDiseaseReports, getRiskLevel, exportReportsToCsv as exportDiseaseCsv } from '../utils/diseaseStorage'
 
 function AdminDashboard() {
-  const [workers, setWorkers] = useState(getWorkers)
+  const [workers, setWorkers] = useState([])
+  const [workersLoading, setWorkersLoading] = useState(true)
+  const [workersError, setWorkersError] = useState('')
   const [reportKey, setReportKey] = useState(0)
 
   const cleaningReports = useMemo(() => getCleaningReports(), [reportKey])
@@ -24,19 +26,38 @@ function AdminDashboard() {
       return acc
     }, [])
 
-  function handleWorkerCreated() {
-    setWorkers(getWorkers())
+  const loadWorkers = useCallback(async () => {
+    setWorkersLoading(true)
+    setWorkersError('')
+    try {
+      const data = await getWorkers()
+      setWorkers(data)
+    } catch (err) {
+      setWorkersError(err.message || 'Failed to load workers')
+    } finally {
+      setWorkersLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { loadWorkers() }, [loadWorkers])
+
+  async function handleWorkerCreated() {
+    await loadWorkers()
     setReportKey((k) => k + 1)
   }
 
-  function handleDeleteWorker(id) {
-    const updated = deleteWorker(id)
-    setWorkers(updated)
+  async function handleDeleteWorker(id) {
+    try {
+      const updated = await deleteWorker(id)
+      setWorkers(updated)
+    } catch (err) {
+      setWorkersError(err.message || 'Failed to delete worker')
+    }
   }
 
   function handleRefresh() {
     setReportKey((k) => k + 1)
-    setWorkers(getWorkers())
+    loadWorkers()
   }
 
   const cleanerCount = workers.filter((w) => w.role === 'cleaner').length
@@ -107,6 +128,11 @@ function AdminDashboard() {
           <h2 className="text-sm font-semibold text-gray-700">Worker Management</h2>
         </div>
         <div className="p-5">
+          {workersError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600">{workersError}</p>
+            </div>
+          )}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div>
               <h3 className="text-sm font-medium text-gray-700 mb-4">Create New Worker</h3>
@@ -116,11 +142,17 @@ function AdminDashboard() {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-medium text-gray-700">All Workers ({workers.length})</h3>
               </div>
-              <WorkerList
-                workers={workers}
-                onDelete={handleDeleteWorker}
-                refreshKey={refreshKey}
-              />
+              {workersLoading ? (
+                <div className="flex items-center justify-center py-12 text-gray-400">
+                  <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Loading workers...
+                </div>
+              ) : (
+                <WorkerList workers={workers} onDelete={handleDeleteWorker} refreshKey={reportKey} />
+              )}
             </div>
           </div>
         </div>

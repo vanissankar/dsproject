@@ -2,7 +2,11 @@ import { useState } from 'react'
 import { FiUser, FiSmartphone, FiBriefcase, FiMapPin, FiKey, FiPlus, FiEye, FiEyeOff } from 'react-icons/fi'
 import { saveWorker } from '../utils/workerStorage'
 
-const AREAS = ['Poultry Area A', 'Poultry Area B', 'Pig Shed A', 'Pig Shed B']
+const AREAS = [
+  'Poultry Area A', 'Poultry Area B', 'Poultry Area C',
+  'Pig Shed A', 'Pig Shed B', 'Pig Shed C',
+  'Cattle Barn', 'Goat Pen', 'Feed Storage', 'Quarantine Zone',
+]
 const ROLES = [
   { value: 'cleaner', label: 'Cleaner' },
   { value: 'disease', label: 'Disease' },
@@ -17,25 +21,33 @@ function WorkerForm({ onWorkerCreated }) {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     setError('')
+    setSubmitting(true)
 
-    const worker = saveWorker({ name, mobile, role, assignedArea, userId, password })
-    if (!worker) {
-      setError('User ID already exists')
-      return
+    try {
+      const worker = await saveWorker({ name, mobile, role, assignedArea, userId, password })
+      if (!worker) {
+        setError('User ID already exists')
+        setSubmitting(false)
+        return
+      }
+
+      setName('')
+      setMobile('')
+      setRole('cleaner')
+      setAssignedArea(AREAS[0])
+      setUserId('')
+      setPassword('')
+      if (onWorkerCreated) onWorkerCreated(worker)
+    } catch (err) {
+      setError(err.message || 'Failed to create worker')
+    } finally {
+      setSubmitting(false)
     }
-
-    setName('')
-    setMobile('')
-    setRole('cleaner')
-    setAssignedArea(AREAS[0])
-    setUserId('')
-    setPassword('')
-    setError('')
-    if (onWorkerCreated) onWorkerCreated(worker)
   }
 
   return (
@@ -146,10 +158,23 @@ function WorkerForm({ onWorkerCreated }) {
 
       <button
         type="submit"
-        className="w-full bg-emerald-600 text-white py-2.5 rounded-md text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"
+        disabled={submitting}
+        className="w-full bg-emerald-600 text-white py-2.5 rounded-md text-sm font-medium hover:bg-emerald-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
-        <FiPlus />
-        Create Worker
+        {submitting ? (
+          <>
+            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            Creating...
+          </>
+        ) : (
+          <>
+            <FiPlus />
+            Create Worker
+          </>
+        )}
       </button>
     </form>
   )

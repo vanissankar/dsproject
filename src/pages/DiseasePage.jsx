@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { FiAlertTriangle, FiActivity, FiThermometer, FiUsers, FiSend, FiAlertCircle, FiXCircle, FiClipboard, FiDownload, FiUser, FiMapPin } from 'react-icons/fi'
 import { getUser } from '../utils/auth'
 import { getWorkers } from '../utils/workerStorage'
@@ -14,9 +14,13 @@ import {
 
 function DiseasePage() {
   const user = getUser()
-  const worker = useMemo(() => {
-    const workers = getWorkers().filter((w) => w.role === 'disease')
-    return workers.length > 0 ? workers[0] : null
+  const [worker, setWorker] = useState(null)
+
+  useEffect(() => {
+    getWorkers().then((workers) => {
+      const found = workers.filter((w) => w.role === 'disease')
+      setWorker(found.length > 0 ? found[0] : null)
+    }).catch(() => setWorker(null))
   }, [])
 
   const monitorName = worker?.name || user?.name || 'Disease Monitor'
